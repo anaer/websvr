@@ -1,0 +1,11 @@
+<html>
+<head>
+  <title>$className</title>
+</head>
+<body>
+  $className中文<br/>
+  #foreach( $name in $nameList )
+    $name<br/>
+  #end
+</body>
+</html>

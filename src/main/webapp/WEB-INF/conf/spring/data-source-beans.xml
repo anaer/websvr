@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context" xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx" xsi:schemaLocation="http://www.springframework.org/schema/beans 
+         http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+         http://www.springframework.org/schema/context
+         http://www.springframework.org/schema/context/spring-context-3.0.xsd
+         http://www.springframework.org/schema/tx
+         http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+         http://www.springframework.org/schema/aop 
+         http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
+         
+    <context:component-scan base-package="com.ncl.impl" />
+         
+	<!-- 数据源配置 -->
+	<bean id="ds" class="org.enhydra.jdbc.pool.StandardXAPoolDataSource" destroy-method="shutdown">
+		<property name="dataSource">
+			<bean class="org.enhydra.jdbc.standard.StandardXADataSource" destroy-method="shutdown">
+				<property name="transactionManager" ref="jotm" />
+				<property name="driverName" value="${jdbc.driver}" />
+				<property name="url" value="${jdbc.url}" />
+				<property name="maxCon" value="20" />
+				<property name="minCon" value="10" />
+				<property name="user" value="${jdbc.username}" />
+				<property name="password" value="${jdbc.password}" />
+				<property name="preparedStmtCacheSize" value="0" />
+			</bean>
+		</property>
+		<property name="minSize" value="2" />
+		<property name="maxSize" value="10" />
+		<!-- 连接生命周期（上次访问时间-当前时间） -->
+		<!-- <property name="lifeTime" value="10"/> -->
+		<!-- 超过最大连接之后的调用getConnection的等待时间 -->
+		<!-- <property name="deadLockMaxWait" value="50"/> -->
+		<!-- 超过最大连接之后的调用getConnection等待，在等待中重试的时间间隔 -->
+		<!-- <property name="deadLockRetryWait" value="3"/> -->
+		<!-- 连接池是否连接检测时间间隔 -->
+		<!-- <property name="sleepTime" value="100"/> -->
+		<property name="user" value="${jdbc.username}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+		<property name="jdbcTestStmt" value="select 1 from dual" />
+		<property name="checkLevelObject" value="2" />
+	</bean>
+
+	<bean id="jotm" class="com.ncl.spring.jotm.JotmFactoryBean" />
+
+	<bean id="txManager" class="org.springframework.transaction.jta.JtaTransactionManager">
+		<property name="userTransaction">
+			<ref local="jotm" />
+		</property>
+		<property name="allowCustomIsolationLevels">
+			<value>true</value>
+		</property>
+	</bean>
+
+	<aop:config>
+		<aop:advisor id="managerTx" advice-ref="txAdvice" pointcut="execution(* com.ncl..*.*(..))" order="0" />
+	</aop:config>
+
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<tx:method name="insert*" propagation="REQUIRED" isolation="REPEATABLE_READ" rollback-for="Exception" />
+			<tx:method name="update*" propagation="REQUIRED" isolation="REPEATABLE_READ" rollback-for="Exception" />
+			<tx:method name="delete*" propagation="REQUIRED" isolation="REPEATABLE_READ" rollback-for="Exception" />
+
+			<tx:method name="get*" propagation="SUPPORTS" read-only="true" rollback-for="Exception" />
+			<tx:method name="query*" propagation="SUPPORTS" read-only="true" rollback-for="Exception" />
+			<tx:method name="*" propagation="SUPPORTS" read-only="true" rollback-for="Exception" />
+		</tx:attributes>
+	</tx:advice>
+
+	<!-- 支持事务注解 -->
+	<tx:annotation-driven transaction-manager="txManager" proxy-target-class="true" />
+</beans>
