@@ -1,3 +1,7 @@
+测试地址:http://127.0.0.1:8080/websvr/index.do
+
+
+
 SpringMVC 开发步骤
 1. 新建Dynamic Web Project
 2. Configure -> Convert to Maven Project 转换为Maven工程
